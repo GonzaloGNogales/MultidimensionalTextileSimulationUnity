@@ -156,7 +156,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Mass: 1
-  Fixed: 1
+  Fixed: 0
   index: 0
   Pos: {x: 0, y: 0, z: 0}
   Vel: {x: 0, y: 0, z: 0}
@@ -322,7 +322,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 291069688}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: -0.693, z: -13.164}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -360,7 +360,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 20
+  Stiffness: 10000
   nodeA: {fileID: 1517380579}
   nodeB: {fileID: 150406128}
   Length0: 0
@@ -474,7 +474,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 20
+  Stiffness: 10000
   nodeA: {fileID: 150406128}
   nodeB: {fileID: 986859841}
   Length0: 0
@@ -682,7 +682,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Mass: 1
-  Fixed: 0
+  Fixed: 1
   index: 0
   Pos: {x: 0, y: 0, z: 0}
   Vel: {x: 0, y: 0, z: 0}
@@ -795,7 +795,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Mass: 1
-  Fixed: 0
+  Fixed: 1
   index: 0
   Pos: {x: 0, y: 0, z: 0}
   Vel: {x: 0, y: 0, z: 0}
@@ -907,7 +907,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 20
+  Stiffness: 1
   nodeA: {fileID: 1391479817}
   nodeB: {fileID: 150406128}
   Length0: 0
@@ -1022,7 +1022,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Mass: 1
-  Fixed: 1
+  Fixed: 0
   index: 0
   Pos: {x: 0, y: 0, z: 0}
   Vel: {x: 0, y: 0, z: 0}
@@ -1134,7 +1134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 20
+  Stiffness: 10000
   nodeA: {fileID: 1391479817}
   nodeB: {fileID: 986859841}
   Length0: 0
@@ -1248,7 +1248,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 20
+  Stiffness: 10000
   nodeA: {fileID: 1391479817}
   nodeB: {fileID: 1517380579}
   Length0: 0
@@ -1362,7 +1362,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 1
+  Stiffness: 10000
   nodeA: {fileID: 1517380579}
   nodeB: {fileID: 986859841}
   Length0: 0
@@ -1478,7 +1478,7 @@ MonoBehaviour:
   Gravity: {x: 0, y: -9.81, z: 0}
   SimObjects:
   - {fileID: 2125075984}
-  IntegrationMethod: 1
+  IntegrationMethod: 4
   Substeps: 3
 --- !u!4 &2069922279
 Transform:

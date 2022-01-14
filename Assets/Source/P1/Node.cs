@@ -72,7 +72,19 @@ public class Node : MonoBehaviour {
     // Get Force Jacobian
     public void GetForceJacobian(MatrixXD dFdx)
     {
-        // TO BE COMPLETED //
+        // Fill each node dFdx (K) matrix (the diagonal mass * gravity)
+        // Row 0 dFndxn
+        dFdx[index, index] = Mass * Manager.Gravity.x;
+        dFdx[index, index + 1] = Mass * Manager.Gravity.y;
+        dFdx[index, index + 2] = Mass * Manager.Gravity.z;
+        // Row 1 dFndxn
+        dFdx[index + 1, index] = Mass * Manager.Gravity.x;
+        dFdx[index + 1, index + 1] = Mass * Manager.Gravity.y;
+        dFdx[index + 1, index + 2] = Mass * Manager.Gravity.z;
+        // Row 2 dFndxn
+        dFdx[index + 2, index] = Mass * Manager.Gravity.x;
+        dFdx[index + 2, index + 1] = Mass * Manager.Gravity.y;
+        dFdx[index + 2, index + 2] = Mass * Manager.Gravity.z;
     }
 
     public void GetMass(MatrixXD mass)

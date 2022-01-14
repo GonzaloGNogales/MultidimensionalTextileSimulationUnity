@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-
 using VectorXD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 using MatrixXD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 using DenseVectorXD = MathNet.Numerics.LinearAlgebra.Double.DenseVector;
@@ -116,9 +115,7 @@ public class PhysicsManager : MonoBehaviour
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
         VectorXD f = new DenseVectorXD(m_numDoFs);
-        f.Clear();
         MatrixXD Minv = new DenseMatrixXD(m_numDoFs);
-        Minv.Clear();
 
         foreach (ISimulable obj in m_objs)
         {
@@ -152,9 +149,7 @@ public class PhysicsManager : MonoBehaviour
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
         VectorXD f = new DenseVectorXD(m_numDoFs);
-        f.Clear();
         MatrixXD Minv = new DenseMatrixXD(m_numDoFs);
-        Minv.Clear();
 
         foreach (ISimulable obj in m_objs)
         {
@@ -201,7 +196,43 @@ public class PhysicsManager : MonoBehaviour
     /// </summary>
     private void stepImplicit()
     {
-        // TO BE COMPLETED //
+        VectorXD x = new DenseVectorXD(m_numDoFs);
+        VectorXD v = new DenseVectorXD(m_numDoFs);
+        VectorXD f = new DenseVectorXD(m_numDoFs);
+        VectorXD b = new DenseVectorXD(m_numDoFs);
+
+        MatrixXD A = new DenseMatrixXD(m_numDoFs);
+        MatrixXD M = new DenseMatrixXD(m_numDoFs);
+        MatrixXD K = new DenseMatrixXD(m_numDoFs);
+
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.GetPosition(x);
+            obj.GetVelocity(v);
+            obj.GetForce(f);
+            obj.GetMass(M);
+            obj.GetForceJacobian(K);
+        }
+
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.FixVector(f);
+            obj.FixMatrix(M);
+            obj.FixMatrix(K);
+        }
+
+        // The velocity implicit integration is computed solving a linear system
+        A = M - TimeStep * TimeStep * K;
+        b = M * v + TimeStep * f;
+        v = A.Solve(b);  // Solving A * v(t+h) = b => v(t+h)
+        // The position integration in Multidimensional is the same as it was already implicit
+        x += TimeStep * v;            
+
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.SetPosition(x);
+            obj.SetVelocity(v);
+        }
     }
 
 }
