@@ -51,6 +51,10 @@ public class PhysicsManager : MonoBehaviour
     #region OtherVariables
     private List<ISimulable> m_objs;
     private int m_numDoFs;
+    
+    // Verlet integrarion method variables
+    private bool firstVerletStep;
+    private VectorXD xOld;
     #endregion
 
     #region MonoBehaviour
@@ -75,30 +79,34 @@ public class PhysicsManager : MonoBehaviour
                 m_numDoFs += simobj.GetNumDoFs();
             }
         }
+        
+        // Initialize Verlet integration variables
+        firstVerletStep = true;
+        xOld = new DenseVectorXD(m_numDoFs);
     }
 
     public void Update()
 	{
 		if (Input.GetKeyUp(KeyCode.P))
-			this.Paused = !this.Paused;
+			Paused = !Paused;
 
     }
 
     public void FixedUpdate()
     {
-        if (this.Paused)
+        if (Paused)
             return; // Not simulating
 
         // Select integration method and apply substeps
         for (int i = 0; i < Substeps; ++i)
         {
-            switch (this.IntegrationMethod)
+            switch (IntegrationMethod)
             {
-                case Integration.Explicit: this.stepExplicit(); break;
-                case Integration.Symplectic: this.stepSymplectic(); break;
-                case Integration.Midpoint: this.stepMidpoint(); break;
-                case Integration.Verlet: this.stepVerlet(); break;
-                case Integration.Implicit: this.stepImplicit(); break;
+                case Integration.Explicit: stepExplicit(); break;
+                case Integration.Symplectic: stepSymplectic(); break;
+                case Integration.Midpoint: stepMidpoint(); break;
+                case Integration.Verlet: stepVerlet(); break;
+                case Integration.Implicit: stepImplicit(); break;
                 default:
                     throw new System.Exception("[ERROR] Should never happen!");
             }
@@ -180,7 +188,36 @@ public class PhysicsManager : MonoBehaviour
     /// </summary>
     private void stepMidpoint()
     {
-        // TO BE COMPLETED //
+        VectorXD x = new DenseVectorXD(m_numDoFs);
+        VectorXD v = new DenseVectorXD(m_numDoFs);
+        VectorXD vHalf = new DenseVectorXD(m_numDoFs);
+        VectorXD f = new DenseVectorXD(m_numDoFs);
+        MatrixXD Minv = new DenseMatrixXD(m_numDoFs);
+
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.GetPosition(x);
+            obj.GetVelocity(v);
+            obj.GetForce(f);
+            obj.GetMassInverse(Minv);
+        }
+
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.FixVector(f);
+            obj.FixMatrix(Minv);
+        }
+
+        vHalf = v + TimeStep / 2 * f;
+        x += TimeStep * vHalf; 
+        v += TimeStep * (Minv * f);
+        
+
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.SetPosition(x);
+            obj.SetVelocity(v);
+        }
     }
 
     /// <summary>
@@ -188,7 +225,41 @@ public class PhysicsManager : MonoBehaviour
     /// </summary>
     private void stepVerlet()
     {
-        // TO BE COMPLETED //
+        VectorXD x = new DenseVectorXD(m_numDoFs);
+        VectorXD v = new DenseVectorXD(m_numDoFs);
+        VectorXD f = new DenseVectorXD(m_numDoFs);
+
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.GetPosition(x);
+            obj.GetVelocity(v);
+            obj.GetForce(f);
+        }
+
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.FixVector(f);
+        }
+
+        if (firstVerletStep)  // Initialization supposing acceleration is constant
+        {
+            xOld = x;
+            x += TimeStep * v + 0.5 * TimeStep * TimeStep * f;
+            firstVerletStep = false;
+        }
+        else
+        {
+            VectorXD aux = x;
+            x = 2 * x - xOld + TimeStep * TimeStep * f;
+            v = (x - xOld) / (2 * TimeStep);
+            xOld = aux;
+        }
+
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.SetPosition(x);
+            obj.SetVelocity(v);
+        }
     }
 
     /// <summary>
