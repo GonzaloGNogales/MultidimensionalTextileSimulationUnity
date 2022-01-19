@@ -50,7 +50,7 @@ public class Spring : MonoBehaviour {
     }
 
     // Get Force
-    public void GetForce(VectorXD force)
+    public void GetForce(VectorXD force, bool useDamping)
     {
         // Add Hooke's law and damping forces related with actual nodes vel
         // Direction of the Forces
@@ -60,7 +60,8 @@ public class Spring : MonoBehaviour {
         // Spring Force
         Vector3 Force = - Stiffness * (Length - Length0) * u;
         // Damping Force
-        Force += - 0.01f * Stiffness * Vector3.Dot(u, nodeA.Vel - nodeB.Vel) * u;
+        if (useDamping)
+            Force += - 0.01f * Stiffness * Vector3.Dot(u, nodeA.Vel - nodeB.Vel) * u;
         
         // Node A
         force[nodeA.index] += Force.x;
@@ -74,7 +75,7 @@ public class Spring : MonoBehaviour {
     }
 
     // Get Force Jacobian
-    public void GetForceJacobian(MatrixXD dFdx)
+    public void GetForceJacobian(MatrixXD dFdx, MatrixXD dFdv)
     {
         // Direction of the Forces
         MatrixXD u = new DenseMatrixXD(1, 3);
@@ -94,6 +95,7 @@ public class Spring : MonoBehaviour {
         
         // Fill dFdx (K) matrix
         // Row 0 dFadxa
+        //dFdx.SetSubMatrix(dFdx.SubMatrix() + dFadxa);  // dFadxa se suma o se resta y ya
         dFdx[nodeA.index, nodeA.index] += dFadxa[0, 0];
         dFdx[nodeA.index, nodeA.index + 1] += dFadxa[0, 1];
         dFdx[nodeA.index, nodeA.index + 2] += dFadxa[0, 2];

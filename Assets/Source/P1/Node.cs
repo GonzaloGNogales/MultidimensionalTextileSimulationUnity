@@ -61,30 +61,26 @@ public class Node : MonoBehaviour {
         Vel = new Vector3((float)vel[index], (float)vel[index + 1], (float)vel[index + 2]);
     }
 
-    public void GetForce(VectorXD force)
+    public void GetForce(VectorXD force, bool useDamping)
     {
         // Add gravity and damping forces related with actual node vel
-        force[index] += Mass * Manager.Gravity.x - 0.4f * Mass * Vel.x;
-        force[index + 1] += Mass * Manager.Gravity.y - 0.4f * Mass * Vel.y;
-        force[index + 2] += Mass * Manager.Gravity.z - 0.4f * Mass * Vel.z;
+        
+        // Spring Force
+        Vector3 Force = Mass * Manager.Gravity;
+        // Damping Force
+        if (useDamping)
+            Force += - 0.4f * Mass * Vel;
+        
+        force[index] += Force.x;
+        force[index + 1] += Force.y;
+        force[index + 2] += Force.z;
     }
 
     // Get Force Jacobian
-    public void GetForceJacobian(MatrixXD dFdx)
+    public void GetForceJacobian(MatrixXD dFdx, MatrixXD dFdv)
     {
-        // Fill each node dFdx (K) matrix (the diagonal mass * gravity)
-        // Row 0 dFndxn
-        dFdx[index, index] = Mass * Manager.Gravity.x;
-        dFdx[index, index + 1] = Mass * Manager.Gravity.y;
-        dFdx[index, index + 2] = Mass * Manager.Gravity.z;
-        // Row 1 dFndxn
-        dFdx[index + 1, index] = Mass * Manager.Gravity.x;
-        dFdx[index + 1, index + 1] = Mass * Manager.Gravity.y;
-        dFdx[index + 1, index + 2] = Mass * Manager.Gravity.z;
-        // Row 2 dFndxn
-        dFdx[index + 2, index] = Mass * Manager.Gravity.x;
-        dFdx[index + 2, index + 1] = Mass * Manager.Gravity.y;
-        dFdx[index + 2, index + 2] = Mass * Manager.Gravity.z;
+        // The derivative of (0, m*g.y, 0) is => dFdx = (0, 0, 0) as there is no x in the force (only 2nd Newton's Law)
+        // But we have to manage dFdv for simulating damping force
     }
 
     public void GetMass(MatrixXD mass)

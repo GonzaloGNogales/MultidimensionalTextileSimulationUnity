@@ -45,12 +45,12 @@ public interface ISimulable
     /// <summary>
     /// Write force values into the force vector.
     /// </summary>
-    void GetForce(VectorXD force);
+    void GetForce(VectorXD force, bool useDamping);
 
     /// <summary>
     /// Write force jacobian values into the matrix.
     /// </summary>
-    void GetForceJacobian(MatrixXD dFdx);
+    void GetForceJacobian(MatrixXD dFdx, MatrixXD dFdv);
 
     /// <summary>
     /// Write mass values into the mass matrix.

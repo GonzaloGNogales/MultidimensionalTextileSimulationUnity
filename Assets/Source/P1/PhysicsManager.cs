@@ -102,11 +102,11 @@ public class PhysicsManager : MonoBehaviour
         {
             switch (IntegrationMethod)
             {
-                case Integration.Explicit: stepExplicit(); break;
-                case Integration.Symplectic: stepSymplectic(); break;
-                case Integration.Midpoint: stepMidpoint(); break;
-                case Integration.Verlet: stepVerlet(); break;
-                case Integration.Implicit: stepImplicit(); break;
+                case Integration.Explicit: stepExplicit(true); break;
+                case Integration.Symplectic: stepSymplectic(true); break;
+                case Integration.Midpoint: stepMidpoint(true); break;
+                case Integration.Verlet: stepVerlet(true); break;
+                case Integration.Implicit: stepImplicit(false); break;
                 default:
                     throw new System.Exception("[ERROR] Should never happen!");
             }
@@ -118,7 +118,7 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Explicit integration.
     /// </summary>
-    private void stepExplicit()
+    private void stepExplicit(bool useDamping)
 	{
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
@@ -129,7 +129,7 @@ public class PhysicsManager : MonoBehaviour
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f);
+            obj.GetForce(f, useDamping);
             obj.GetMassInverse(Minv);
         }
 
@@ -152,7 +152,7 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Symplectic integration.
     /// </summary>
-    private void stepSymplectic()
+    private void stepSymplectic(bool useDamping)
 	{
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
@@ -163,7 +163,7 @@ public class PhysicsManager : MonoBehaviour
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f);
+            obj.GetForce(f, useDamping);
             obj.GetMassInverse(Minv);
         }
 
@@ -186,7 +186,7 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Midpoint integration.
     /// </summary>
-    private void stepMidpoint()
+    private void stepMidpoint(bool useDamping)
     {
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
@@ -198,7 +198,7 @@ public class PhysicsManager : MonoBehaviour
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f);
+            obj.GetForce(f, useDamping);
             obj.GetMassInverse(Minv);
         }
 
@@ -209,6 +209,7 @@ public class PhysicsManager : MonoBehaviour
         }
 
         vHalf = v + TimeStep / 2 * f;
+        //fHalf = ...;  // Compute forces on mid step too
         x += TimeStep * vHalf; 
         v += TimeStep * (Minv * f);
         
@@ -223,7 +224,7 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Verlet integration.
     /// </summary>
-    private void stepVerlet()
+    private void stepVerlet(bool useDamping)
     {
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
@@ -233,7 +234,7 @@ public class PhysicsManager : MonoBehaviour
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f);
+            obj.GetForce(f, useDamping);
         }
 
         foreach (ISimulable obj in m_objs)
@@ -265,7 +266,7 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Implicit integration.
     /// </summary>
-    private void stepImplicit()
+    private void stepImplicit(bool useDamping)
     {
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
@@ -274,26 +275,29 @@ public class PhysicsManager : MonoBehaviour
 
         MatrixXD A = new DenseMatrixXD(m_numDoFs);
         MatrixXD M = new DenseMatrixXD(m_numDoFs);
-        MatrixXD K = new DenseMatrixXD(m_numDoFs);
+        MatrixXD dFdx = new DenseMatrixXD(m_numDoFs);  // Elastic force derivative
+        MatrixXD dFdv = new DenseMatrixXD(m_numDoFs);  // Damping force derivative
+        
 
         foreach (ISimulable obj in m_objs)
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f);
+            obj.GetForce(f, useDamping);
             obj.GetMass(M);
-            obj.GetForceJacobian(K);
+            obj.GetForceJacobian(dFdx, dFdv);
         }
 
         foreach (ISimulable obj in m_objs)
         {
             obj.FixVector(f);
             obj.FixMatrix(M);
-            obj.FixMatrix(K);
+            obj.FixMatrix(dFdx);
+            obj.FixMatrix(dFdv);
         }
 
         // The velocity implicit integration is computed solving a linear system
-        A = M - TimeStep * TimeStep * K;
+        A = M - TimeStep * TimeStep * dFdx;
         b = M * v + TimeStep * f;
         v = A.Solve(b);  // Solving A * v(t+h) = b => v(t+h)
         // The position integration in Multidimensional is the same as it was already implicit
