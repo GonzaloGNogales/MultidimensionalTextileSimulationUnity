@@ -230,7 +230,6 @@ public class PhysicsManager : MonoBehaviour
             obj.SetVelocity(v);
         }
         
-        
         // Evaluate forces at h/2
         foreach (ISimulable obj in m_objs)
         { 
@@ -313,7 +312,6 @@ public class PhysicsManager : MonoBehaviour
         MatrixXD dFdx = new DenseMatrixXD(m_numDoFs);  // Elastic force derivative
         MatrixXD dFdv = new DenseMatrixXD(m_numDoFs);  // Damping force derivative
         
-
         foreach (ISimulable obj in m_objs)
         {
             obj.GetPosition(x);
@@ -322,6 +320,22 @@ public class PhysicsManager : MonoBehaviour
             obj.GetMass(M);
             obj.GetForceJacobian(dFdx, dFdv);
         }
+        
+        /*
+        // Check dFdx values outside of the foor loop for having dFdx complete
+        // Check dFdx with finite differences: dFdx approx => (F(x0 + d) - F(x0)) / d
+        float d = 0.001f;  // Approximate d checking with more than one value 0.01f and 0.001f for example
+        VectorXD xSave = x;
+        VectorXD fSave = f;
+        //obj.GetPosition(x + d);
+        //obj.GetForce(f);
+        VectorXD approxdFdx = (f - fSave) / d;
+        // Use approx_dFdx to check if derivatives were correctly computed
+            
+        // After checking restore state
+        x = xSave;
+        f = fSave;
+        /**/
 
         foreach (ISimulable obj in m_objs)
         {

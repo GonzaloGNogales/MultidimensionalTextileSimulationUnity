@@ -78,24 +78,25 @@ public class Spring : MonoBehaviour {
     public void GetForceJacobian(MatrixXD dFdx, MatrixXD dFdv)
     {
         // Direction of the Forces
-        MatrixXD u = new DenseMatrixXD(1, 3);
+        VectorXD u = new DenseVectorXD(3);
         Vector3 dir = nodeA.Pos - nodeB.Pos;
         dir.Normalize();
-        u[0, 0] = dir[0];
-        u[0, 1] = dir[1];
-        u[0, 2] = dir[2];
+        u[0] = dir[0];
+        u[1] = dir[1];
+        u[2] = dir[2];
+        MatrixXD uuT = u.OuterProduct(u);
         
         // Identity matrix
         MatrixXD I = DenseMatrixXD.CreateIdentity(3);
         
         // dFadxa and cross derivatives computation
-        MatrixXD dFadxa = - Stiffness * (Length - Length0) / Length * (I - u.Transpose() * u) - Stiffness * u.Transpose() * u;
+        MatrixXD dFadxa = - Stiffness * (Length - Length0) / Length * I - Stiffness * (Length0 / Length) * uuT;
         MatrixXD dFadxb = - dFadxa;
         MatrixXD dFbdxa = - dFadxa;
         MatrixXD dFbdxb = dFadxa;
         
         // dFadva and cross derivatives computation dFadva => -d * u.transposed * u
-        MatrixXD dFadva = - 0.01f * Stiffness * u.Transpose() * u;
+        MatrixXD dFadva = - 0.01f * Stiffness * uuT;
         MatrixXD dFadvb = - dFadva;
         MatrixXD dFbdva = - dFadva;
         MatrixXD dFbdvb = dFadva;
