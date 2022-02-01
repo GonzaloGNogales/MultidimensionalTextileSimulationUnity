@@ -61,15 +61,14 @@ public class Node : MonoBehaviour {
         Vel = new Vector3((float)vel[index], (float)vel[index + 1], (float)vel[index + 2]);
     }
 
-    public void GetForce(VectorXD force, bool useDamping)
+    public void GetForce(VectorXD force)
     {
         // Add gravity and damping forces related with actual node vel
         
         // Spring Force
         Vector3 Force = Mass * Manager.Gravity;
         // Damping Force
-        if (useDamping)
-            Force += - 0.4f * Mass * Vel;
+        Force += - 0.4f * Mass * Vel;
         
         force[index] += Force.x;
         force[index + 1] += Force.y;
@@ -81,6 +80,19 @@ public class Node : MonoBehaviour {
     {
         // The derivative of (0, m*g.y, 0) is => dFdx = (0, 0, 0) as there is no x in the force (only 2nd Newton's Law)
         // But we have to manage dFdv for simulating damping force
+        // Fill dFdv (D) matrix
+        // Row 0 dFadxa
+        // dFdv[index, index] += -0.4f * Mass;
+        // dFdv[index, index + 1] += -0.4f * Mass;
+        // dFdv[index, index + 2] += -0.4f * Mass;
+        // // Row 1 dFadxa
+        dFdv[index + 1, index] += -0.4f * Mass;
+        dFdv[index + 1, index + 1] += -0.4f * Mass;
+        dFdv[index + 1, index + 2] += -0.4f * Mass;
+        // // Row 2 dFadxa
+        // dFdv[index + 2, index] += -0.4f * Mass;
+        // dFdv[index + 2, index + 1] += -0.4f * Mass;
+        // dFdv[index + 2, index + 2] += -0.4f * Mass;
     }
 
     public void GetMass(MatrixXD mass)

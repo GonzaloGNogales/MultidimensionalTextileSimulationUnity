@@ -24,6 +24,7 @@ public class Spring : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
+
         Vector3 yaxis = new Vector3(0.0f, 1.0f, 0.0f);
         Vector3 dir = nodeA.Pos - nodeB.Pos;
         dir.Normalize();
@@ -50,7 +51,7 @@ public class Spring : MonoBehaviour {
     }
 
     // Get Force
-    public void GetForce(VectorXD force, bool useDamping)
+    public void GetForce(VectorXD force)
     {
         // Add Hooke's law and damping forces related with actual nodes vel
         // Direction of the Forces
@@ -60,8 +61,7 @@ public class Spring : MonoBehaviour {
         // Spring Force
         Vector3 Force = - Stiffness * (Length - Length0) * u;
         // Damping Force
-        if (useDamping)
-            Force += - 0.01f * Stiffness * Vector3.Dot(u, nodeA.Vel - nodeB.Vel) * u;
+        Force += - 0.01f * Stiffness * Vector3.Dot(u, nodeA.Vel - nodeB.Vel) * u;
         
         // Node A
         force[nodeA.index] += Force.x;
@@ -88,64 +88,59 @@ public class Spring : MonoBehaviour {
         // Identity matrix
         MatrixXD I = DenseMatrixXD.CreateIdentity(3);
         
+        // dFadxa and cross derivatives computation
         MatrixXD dFadxa = - Stiffness * (Length - Length0) / Length * (I - u.Transpose() * u) - Stiffness * u.Transpose() * u;
         MatrixXD dFadxb = - dFadxa;
         MatrixXD dFbdxa = - dFadxa;
         MatrixXD dFbdxb = dFadxa;
         
+        // dFadva and cross derivatives computation dFadva => -d * u.transposed * u
+        MatrixXD dFadva = - 0.01f * Stiffness * u.Transpose() * u;
+        MatrixXD dFadvb = - dFadva;
+        MatrixXD dFbdva = - dFadva;
+        MatrixXD dFbdvb = dFadva;
+        
         // Fill dFdx (K) matrix
-        // Row 0 dFadxa
-        //dFdx.SetSubMatrix(dFdx.SubMatrix() + dFadxa);  // dFadxa se suma o se resta y ya
-        dFdx[nodeA.index, nodeA.index] += dFadxa[0, 0];
-        dFdx[nodeA.index, nodeA.index + 1] += dFadxa[0, 1];
-        dFdx[nodeA.index, nodeA.index + 2] += dFadxa[0, 2];
-        // Row 1 dFadxa
-        dFdx[nodeA.index + 1, nodeA.index] += dFadxa[1, 0];
-        dFdx[nodeA.index + 1, nodeA.index + 1] += dFadxa[1, 1];
-        dFdx[nodeA.index + 1, nodeA.index + 2] += dFadxa[1, 2];
-        // Row 2 dFadxa
-        dFdx[nodeA.index + 2, nodeA.index] += dFadxa[2, 0];
-        dFdx[nodeA.index + 2, nodeA.index + 1] += dFadxa[2, 1];
-        dFdx[nodeA.index + 2, nodeA.index + 2] += dFadxa[2, 2];
+        // dFadxa
+        dFdx.SetSubMatrix(nodeA.index, 
+                        nodeA.index, 
+                          dFdx.SubMatrix(nodeA.index, 3, nodeA.index, 3) + dFadxa);
         
-        // Row 0 dFadxb
-        dFdx[nodeA.index, nodeB.index] += dFadxb[0, 0];
-        dFdx[nodeA.index, nodeB.index + 1] += dFadxb[0, 1];
-        dFdx[nodeA.index, nodeB.index + 2] += dFadxb[0, 2];
-        // Row 1 dFadxb
-        dFdx[nodeA.index + 1, nodeB.index] += dFadxb[1, 0];
-        dFdx[nodeA.index + 1, nodeB.index + 1] += dFadxb[1, 1];
-        dFdx[nodeA.index + 1, nodeB.index + 2] += dFadxb[1, 2];
-        // Row 2 dFadxb
-        dFdx[nodeA.index + 2, nodeB.index] += dFadxb[2, 0];
-        dFdx[nodeA.index + 2, nodeB.index + 1] += dFadxb[2, 1];
-        dFdx[nodeA.index + 2, nodeB.index + 2] += dFadxb[2, 2];
+        // dFadxb
+        dFdx.SetSubMatrix(nodeA.index, 
+                        nodeB.index, 
+                          dFdx.SubMatrix(nodeA.index, 3, nodeB.index, 3) + dFadxb);
+
+        // dFbdxa
+        dFdx.SetSubMatrix(nodeB.index, 
+                        nodeA.index, 
+                          dFdx.SubMatrix(nodeB.index, 3, nodeA.index, 3) + dFbdxa);
+
+        // dFbdxb
+        dFdx.SetSubMatrix(nodeB.index, 
+                        nodeB.index, 
+                          dFdx.SubMatrix(nodeB.index, 3, nodeB.index, 3) + dFbdxb);
         
-        // Row 0 dFbdxa
-        dFdx[nodeB.index, nodeA.index] += dFbdxa[0, 0];
-        dFdx[nodeB.index, nodeA.index + 1] += dFbdxa[0, 1];
-        dFdx[nodeB.index, nodeA.index + 2] += dFbdxa[0, 2];
-        // Row 1 dFbdxa
-        dFdx[nodeB.index + 1, nodeA.index] += dFbdxa[1, 0];
-        dFdx[nodeB.index + 1, nodeA.index + 1] += dFbdxa[1, 1];
-        dFdx[nodeB.index + 1, nodeA.index + 2] += dFbdxa[1, 2];
-        // Row 2 dFbdxa
-        dFdx[nodeB.index + 2, nodeA.index] += dFbdxa[2, 0];
-        dFdx[nodeB.index + 2, nodeA.index + 1] += dFbdxa[2, 1];
-        dFdx[nodeB.index + 2, nodeA.index + 2] += dFbdxa[2, 2];
+        // Fill dFdv (D) matrix
+        // dFadva
+        dFdv.SetSubMatrix(nodeA.index, 
+                        nodeA.index, 
+                          dFdv.SubMatrix(nodeA.index, 3, nodeA.index, 3) + dFadva);
         
-        // Row 0 dFbdxb
-        dFdx[nodeB.index, nodeB.index] += dFbdxb[0, 0];
-        dFdx[nodeB.index, nodeB.index + 1] += dFbdxb[0, 1];
-        dFdx[nodeB.index, nodeB.index + 2] += dFbdxb[0, 2];
-        // Row 1 dFbdxb
-        dFdx[nodeB.index + 1, nodeB.index] += dFbdxb[1, 0];
-        dFdx[nodeB.index + 1, nodeB.index + 1] += dFbdxb[1, 1];
-        dFdx[nodeB.index + 1, nodeB.index + 2] += dFbdxb[1, 2];
-        // Row 2 dFbdxb
-        dFdx[nodeB.index + 2, nodeB.index] += dFbdxb[2, 0];
-        dFdx[nodeB.index + 2, nodeB.index + 1] += dFbdxb[2, 1];
-        dFdx[nodeB.index + 2, nodeB.index + 2] += dFbdxb[2, 2];
+        // dFadvb
+        dFdv.SetSubMatrix(nodeA.index, 
+                        nodeB.index, 
+                          dFdv.SubMatrix(nodeA.index, 3, nodeB.index, 3) + dFadvb);
+
+        // dFbdva
+        dFdv.SetSubMatrix(nodeB.index, 
+                        nodeA.index, 
+                          dFdv.SubMatrix(nodeB.index, 3, nodeA.index, 3) + dFbdva);
+
+        // dFbdvb
+        dFdv.SetSubMatrix(nodeB.index, 
+                        nodeB.index, 
+                          dFdv.SubMatrix(nodeB.index, 3, nodeB.index, 3) + dFbdvb);
     }
 
 }

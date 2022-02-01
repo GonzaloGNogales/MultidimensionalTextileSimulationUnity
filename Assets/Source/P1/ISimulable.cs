@@ -45,7 +45,7 @@ public interface ISimulable
     /// <summary>
     /// Write force values into the force vector.
     /// </summary>
-    void GetForce(VectorXD force, bool useDamping);
+    void GetForce(VectorXD force);
 
     /// <summary>
     /// Write force jacobian values into the matrix.

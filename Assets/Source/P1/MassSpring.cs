@@ -88,18 +88,17 @@ public class MassSpring : MonoBehaviour, ISimulable
             Nodes[i].SetVelocity(velocity);
     }
 
-    public void GetForce(VectorXD force, bool useDamping)
+    public void GetForce(VectorXD force)
     {
         for (int i = 0; i < Nodes.Count; ++i)
-                Nodes[i].GetForce(force, useDamping);
+            Nodes[i].GetForce(force);
 
         for (int i = 0; i < Springs.Count; ++i)
-            Springs[i].GetForce(force, useDamping);
+            Springs[i].GetForce(force);
     }
 
     public void GetForceJacobian(MatrixXD dFdx, MatrixXD dFdv)
     {
-        // Get Force Jacobian for elastic and damping force partial derivatives
         for (int i = 0; i < Nodes.Count; ++i)
             Nodes[i].GetForceJacobian(dFdx, dFdv);
 

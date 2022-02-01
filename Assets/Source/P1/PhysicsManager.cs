@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+
 using VectorXD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 using MatrixXD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 using DenseVectorXD = MathNet.Numerics.LinearAlgebra.Double.DenseVector;
@@ -22,7 +23,7 @@ public class PhysicsManager : MonoBehaviour
 		TimeStep = 0.01f;
 		Gravity = new Vector3 (0.0f, -9.81f, 0.0f);
 		IntegrationMethod = Integration.Explicit;
-        Substeps = 5;
+        Substeps = 1;
     }
 
 	/// <summary>
@@ -45,7 +46,7 @@ public class PhysicsManager : MonoBehaviour
     public List<GameObject> SimObjects;
     public Integration IntegrationMethod;
     public int Substeps;
-
+    
     #endregion
 
     #region OtherVariables
@@ -87,26 +88,26 @@ public class PhysicsManager : MonoBehaviour
 
     public void Update()
 	{
-		if (Input.GetKeyUp(KeyCode.P))
-			Paused = !Paused;
+		if (Input.GetKeyUp (KeyCode.P))
+			this.Paused = !this.Paused;
 
     }
 
     public void FixedUpdate()
     {
-        if (Paused)
+        if (this.Paused)
             return; // Not simulating
 
-        // Select integration method and apply substeps
+        // Select integration method and add sub-stepping for speeding up the simulation
         for (int i = 0; i < Substeps; ++i)
         {
-            switch (IntegrationMethod)
+            switch (this.IntegrationMethod)
             {
-                case Integration.Explicit: stepExplicit(true); break;
-                case Integration.Symplectic: stepSymplectic(true); break;
-                case Integration.Midpoint: stepMidpoint(true); break;
-                case Integration.Verlet: stepVerlet(true); break;
-                case Integration.Implicit: stepImplicit(false); break;
+                case Integration.Explicit: this.stepExplicit(); break;
+                case Integration.Symplectic: this.stepSymplectic(); break;
+                case Integration.Midpoint: this.stepMidpoint(); break;
+                case Integration.Verlet: this.stepVerlet(); break;
+                case Integration.Implicit: this.stepImplicit(); break;
                 default:
                     throw new System.Exception("[ERROR] Should never happen!");
             }
@@ -118,18 +119,20 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Explicit integration.
     /// </summary>
-    private void stepExplicit(bool useDamping)
+    private void stepExplicit()
 	{
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
         VectorXD f = new DenseVectorXD(m_numDoFs);
+        f.Clear();
         MatrixXD Minv = new DenseMatrixXD(m_numDoFs);
+        Minv.Clear();
 
         foreach (ISimulable obj in m_objs)
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f, useDamping);
+            obj.GetForce(f);
             obj.GetMassInverse(Minv);
         }
 
@@ -152,18 +155,20 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Symplectic integration.
     /// </summary>
-    private void stepSymplectic(bool useDamping)
+    private void stepSymplectic()
 	{
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
         VectorXD f = new DenseVectorXD(m_numDoFs);
+        f.Clear();
         MatrixXD Minv = new DenseMatrixXD(m_numDoFs);
+        Minv.Clear();
 
         foreach (ISimulable obj in m_objs)
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f, useDamping);
+            obj.GetForce(f);
             obj.GetMassInverse(Minv);
         }
 
@@ -186,21 +191,25 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Midpoint integration.
     /// </summary>
-    private void stepMidpoint(bool useDamping)
+    private void stepMidpoint()
     {
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
-        VectorXD vHalf = new DenseVectorXD(m_numDoFs);
         VectorXD f = new DenseVectorXD(m_numDoFs);
         MatrixXD Minv = new DenseMatrixXD(m_numDoFs);
 
+        // Initialize and evaluate forces at t0
         foreach (ISimulable obj in m_objs)
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f, useDamping);
+            obj.GetForce(f);
             obj.GetMassInverse(Minv);
         }
+        
+        // Save initial position and velocity
+        VectorXD x0 = x;
+        VectorXD v0 = v;
 
         foreach (ISimulable obj in m_objs)
         {
@@ -208,15 +217,41 @@ public class PhysicsManager : MonoBehaviour
             obj.FixMatrix(Minv);
         }
 
-        vHalf = v + TimeStep / 2 * f;
-        //fHalf = ...;  // Compute forces on mid step too
-        x += TimeStep * vHalf; 
-        v += TimeStep * (Minv * f);
+        // Midpoint Pos and Vel integration (with implicit position integration)
+        v += 0.5f * TimeStep * (Minv * f);
+        x += 0.5f * TimeStep * v;
         
-
+        // After each integration it is needed to update spring state
         foreach (ISimulable obj in m_objs)
         {
-            obj.SetPosition(x);
+            // This is called for updating spring states and
+            // for computing forces again with correct mid positions and velocities
+            obj.SetPosition(x);  
+            obj.SetVelocity(v);
+        }
+        
+        
+        // Evaluate forces at h/2
+        foreach (ISimulable obj in m_objs)
+        { 
+            // Perform another force computation
+            obj.GetForce(f);
+        }
+
+        // Fix forces again because they may have changed
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.FixVector(f);
+        }
+
+        // Full step Pos and Vel integration (implicit Pos)
+        v = v0 + TimeStep * (Minv * f);
+        x = x0 +  TimeStep * v;
+        
+        // Finally set final positions and velocities with the midpoint integration resulting values of x and v
+        foreach (ISimulable obj in m_objs)
+        {
+            obj.SetPosition(x);  // This is called for updating spring states and updating the positions
             obj.SetVelocity(v);
         }
     }
@@ -224,7 +259,7 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Verlet integration.
     /// </summary>
-    private void stepVerlet(bool useDamping)
+    private void stepVerlet()
     {
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
@@ -234,7 +269,7 @@ public class PhysicsManager : MonoBehaviour
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f, useDamping);
+            obj.GetForce(f);
         }
 
         foreach (ISimulable obj in m_objs)
@@ -266,7 +301,7 @@ public class PhysicsManager : MonoBehaviour
     /// <summary>
     /// Performs a simulation step using Implicit integration.
     /// </summary>
-    private void stepImplicit(bool useDamping)
+    private void stepImplicit()
     {
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
@@ -283,7 +318,7 @@ public class PhysicsManager : MonoBehaviour
         {
             obj.GetPosition(x);
             obj.GetVelocity(v);
-            obj.GetForce(f, useDamping);
+            obj.GetForce(f);
             obj.GetMass(M);
             obj.GetForceJacobian(dFdx, dFdv);
         }
@@ -297,11 +332,11 @@ public class PhysicsManager : MonoBehaviour
         }
 
         // The velocity implicit integration is computed solving a linear system
-        A = M - TimeStep * TimeStep * dFdx;
-        b = M * v + TimeStep * f;
+        A = M - TimeStep * dFdv - TimeStep * TimeStep * dFdx;
+        b = (M - TimeStep * dFdv) * v + TimeStep * f;
         v = A.Solve(b);  // Solving A * v(t+h) = b => v(t+h)
         // The position integration in Multidimensional is the same as it was already implicit
-        x += TimeStep * v;            
+        x += TimeStep * v;      
 
         foreach (ISimulable obj in m_objs)
         {
