@@ -360,7 +360,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 100000000
+  Stiffness: 1000
   nodeA: {fileID: 1517380579}
   nodeB: {fileID: 150406128}
   Length0: 0
@@ -474,7 +474,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 100000000
+  Stiffness: 1000
   nodeA: {fileID: 150406128}
   nodeB: {fileID: 986859841}
   Length0: 0
@@ -907,7 +907,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 100
+  Stiffness: 10
   nodeA: {fileID: 1391479817}
   nodeB: {fileID: 150406128}
   Length0: 0
@@ -1134,7 +1134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 100000000
+  Stiffness: 1000
   nodeA: {fileID: 1391479817}
   nodeB: {fileID: 986859841}
   Length0: 0
@@ -1248,7 +1248,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 100000000
+  Stiffness: 1000
   nodeA: {fileID: 1391479817}
   nodeB: {fileID: 1517380579}
   Length0: 0
@@ -1427,7 +1427,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f00b93579a7e9a54dbe19c136ec3b4c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Stiffness: 100000000
+  Stiffness: 1000
   nodeA: {fileID: 1517380579}
   nodeB: {fileID: 986859841}
   Length0: 0

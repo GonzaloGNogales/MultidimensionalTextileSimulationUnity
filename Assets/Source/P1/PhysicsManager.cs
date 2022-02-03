@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-
 using VectorXD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 using MatrixXD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 using DenseVectorXD = MathNet.Numerics.LinearAlgebra.Double.DenseVector;
@@ -89,25 +87,24 @@ public class PhysicsManager : MonoBehaviour
     public void Update()
 	{
 		if (Input.GetKeyUp (KeyCode.P))
-			this.Paused = !this.Paused;
-
+			Paused = !Paused;
     }
 
     public void FixedUpdate()
     {
-        if (this.Paused)
+        if (Paused)
             return; // Not simulating
 
         // Select integration method and add sub-stepping for speeding up the simulation
         for (int i = 0; i < Substeps; ++i)
         {
-            switch (this.IntegrationMethod)
+            switch (IntegrationMethod)
             {
-                case Integration.Explicit: this.stepExplicit(); break;
-                case Integration.Symplectic: this.stepSymplectic(); break;
-                case Integration.Midpoint: this.stepMidpoint(); break;
-                case Integration.Verlet: this.stepVerlet(); break;
-                case Integration.Implicit: this.stepImplicit(); break;
+                case Integration.Explicit: stepExplicit(); break;
+                case Integration.Symplectic: stepSymplectic(); break;
+                case Integration.Midpoint: stepMidpoint(); break;
+                case Integration.Verlet: stepVerlet(); break;
+                case Integration.Implicit: stepImplicit(); break;
                 default:
                     throw new System.Exception("[ERROR] Should never happen!");
             }
@@ -124,9 +121,7 @@ public class PhysicsManager : MonoBehaviour
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
         VectorXD f = new DenseVectorXD(m_numDoFs);
-        f.Clear();
         MatrixXD Minv = new DenseMatrixXD(m_numDoFs);
-        Minv.Clear();
 
         foreach (ISimulable obj in m_objs)
         {
@@ -160,9 +155,7 @@ public class PhysicsManager : MonoBehaviour
         VectorXD x = new DenseVectorXD(m_numDoFs);
         VectorXD v = new DenseVectorXD(m_numDoFs);
         VectorXD f = new DenseVectorXD(m_numDoFs);
-        f.Clear();
         MatrixXD Minv = new DenseMatrixXD(m_numDoFs);
-        Minv.Clear();
 
         foreach (ISimulable obj in m_objs)
         {
